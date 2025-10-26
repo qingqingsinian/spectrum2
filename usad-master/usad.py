@@ -5,6 +5,7 @@ from utils import *
 device = get_default_device()
 
 # 修改 Encoder 类以支持正则化
+# 修改 Encoder 类以移除批归一化
 class Encoder(nn.Module):
   def __init__(self, in_size, latent_size, dropout_rate=0.0, use_batch_norm=False):
     super().__init__()
@@ -12,24 +13,21 @@ class Encoder(nn.Module):
     
     # First layer
     layers.append(nn.Linear(in_size, int(in_size/2)))
-    if use_batch_norm:
-        layers.append(nn.BatchNorm1d(int(in_size/2)))
+    # 移除了 BatchNorm 层
     layers.append(nn.ReLU(True))
     if dropout_rate > 0:
         layers.append(nn.Dropout(dropout_rate))
-        
+  
     # Second layer
     layers.append(nn.Linear(int(in_size/2), int(in_size/4)))
-    if use_batch_norm:
-        layers.append(nn.BatchNorm1d(int(in_size/4)))
+    # 移除了 BatchNorm 层
     layers.append(nn.ReLU(True))
     if dropout_rate > 0:
         layers.append(nn.Dropout(dropout_rate))
         
     # Third layer
     layers.append(nn.Linear(int(in_size/4), latent_size))
-    if use_batch_norm:
-        layers.append(nn.BatchNorm1d(latent_size))
+    # 移除了 BatchNorm 层
     layers.append(nn.ReLU(True))
     if dropout_rate > 0:
         layers.append(nn.Dropout(dropout_rate))
@@ -38,8 +36,8 @@ class Encoder(nn.Module):
         
   def forward(self, w):
     return self.layers(w)
-
 # 修改 Decoder 类以支持正则化
+# 修改 Decoder 类以移除批归一化
 class Decoder(nn.Module):
   def __init__(self, latent_size, out_size, dropout_rate=0.0, use_batch_norm=False):
     super().__init__()
@@ -47,45 +45,44 @@ class Decoder(nn.Module):
     
     # First layer
     layers.append(nn.Linear(latent_size, int(out_size/4)))
-    layers.append(nn.BatchNorm1d(int(out_size/4)))
+    # 移除了 BatchNorm 层
     layers.append(nn.ReLU(True))
-    
-    layers.append(nn.Dropout(dropout_rate))
+    if dropout_rate > 0:
+        layers.append(nn.Dropout(dropout_rate))
         
     # Second layer
     layers.append(nn.Linear(int(out_size/4), int(out_size/2)))
-    
-    layers.append(nn.BatchNorm1d(int(out_size/2)))
+    # 移除了 BatchNorm 层
     layers.append(nn.ReLU(True))
-    
-    layers.append(nn.Dropout(dropout_rate))
+    if dropout_rate > 0:
+        layers.append(nn.Dropout(dropout_rate))
         
     # Third layer
     layers.append(nn.Linear(int(out_size/2), out_size))
-    
-    layers.append(nn.BatchNorm1d(out_size))
+    # 移除了 BatchNorm 层
     layers.append(nn.ReLU(True))  # Changed from Sigmoid to ReLU for intermediate layer
     layers.append(nn.Sigmoid())
         
     self.layers = nn.Sequential(*layers)
         
   def forward(self, z):
-    return self.layers(z)
-    
+    return self.layers(z) 
 class UsadModel(nn.Module):
-  def __init__(self, w_size, z_size, dropout_rate=0.0, use_batch_norm=False):
+  def __init__(self, w_size, z_size, dropout_rate=0.1, use_batch_norm=True):
     super().__init__()
     self.encoder = Encoder(w_size, z_size, dropout_rate, use_batch_norm)
     self.decoder1 = Decoder(z_size, w_size, dropout_rate, use_batch_norm)
     self.decoder2 = Decoder(z_size, w_size, dropout_rate, use_batch_norm)
   
   def training_step(self, batch, n):
-    z = self.encoder(batch)
-    w1 = self.decoder1(z)
-    w2 = self.decoder2(z)
-    w3 = self.decoder2(self.encoder(w1))
-    loss1 = 1/n*torch.mean((batch-w1)**2)+(1-1/n)*torch.mean((batch-w3)**2)
+    z = self.encoder(batch)#z=e(x)
+    w1 = self.decoder1(z)#w1=d(z)=d(e(x))
+    w2 = self.decoder2(z)#w2=d(z)=d(e(x))
+    w3 = self.decoder2(self.encoder(w1))#w3=d(e(d(z)))
+    loss1 = 1/n*torch.mean((batch-w1)**2)+(1-1/n)*torch.mean((batch-w3)**2)#ae1:尽可能生成与输入一样的数据，并且
+    #尽可能让自己生成的数据让ae2认为也是正常的（最小化batch-w3）
     loss2 = 1/n*torch.mean((batch-w2)**2)-(1-1/n)*torch.mean((batch-w3)**2)
+    #ae2：尽可能生成与输入一致的数据，并尽可能区分ae1生成的数据（认为ae1生成的数据不正常）
     return loss1,loss2
 
   def validation_step(self, batch, n):
@@ -126,9 +123,11 @@ def training(epochs, model, train_loader, val_loader, learning_rate=0.0004, weig
     )
     
     for epoch in range(epochs):
+        n=0
         for batch in train_loader:
             batch=to_device(batch,device)
-            
+            print(n)
+            n+=1
             #Train AE1
             loss1,loss2 = model.training_step(batch,epoch+1)
             # 检查损失是否为NaN
@@ -165,7 +164,11 @@ def testing(model, test_loader, alpha=.5, beta=.5):
     with torch.no_grad():
         for batch in test_loader:
             batch=to_device(batch,device)
-            w1=model.decoder1(model.encoder(batch))
+            c=model.encoder(batch)
+            
+            w1=model.decoder1(c)
+            
             w2=model.decoder2(model.encoder(w1))
+           
             results.append(alpha*torch.mean((batch-w1)**2,axis=1)+beta*torch.mean((batch-w2)**2,axis=1))
     return results

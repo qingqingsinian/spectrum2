@@ -274,6 +274,7 @@ def sr_cnn_eval(timestamp, value, label, window, net, ms_optioin, threshold=0.01
             x = Var(x)
             output = net(x)
         aa = output.detach().cpu().numpy().reshape(-1)
+    
         res = np.zeros(aa.shape, np.int64)
         res[aa > threshold] = 1
         return res, aa
@@ -286,13 +287,15 @@ def sr_cnn_eval(timestamp, value, label, window, net, ms_optioin, threshold=0.01
         back = 5
     detres = [0] * (win_size - backaddnum)
     scores = [0] * (win_size - backaddnum)
-
+    
     for pt in range(win_size - backaddnum + back + step, length - back, step):
+     
         head = max(0, pt - (win_size - backaddnum))
         tail = min(length, pt)
         wave = np.array(SpectralResidual.extend_series(value[head:tail + back]))
         mag = spectral_residual(wave)
         modeloutput, rawout = modelwork(mag, net)
+       
         for ipt in range(pt - step - back, pt - back):
             detres.append(modeloutput[ipt - head])
             scores.append(rawout[ipt - head].item())

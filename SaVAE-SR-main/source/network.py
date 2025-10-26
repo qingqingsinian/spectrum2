@@ -76,11 +76,14 @@ class VAE(nn.Module):
         self.z_dim = z_dim
         self.eps = eps
         self.n_samples = L
+        self._print_count=0
         self.encoder = Encoder(x_dim=self.x_dim, z_dim=self.z_dim, eps=self.eps)
         self.generator = Generator(z_dim=self.z_dim, x_dim=self.x_dim, eps=self.eps)
 
     def forward(self, x):
         z_mean, z_std = self.encoder(x)
+    
+        
         z = self.reparameterization(z_mean, z_std)
         p_z_x = dist.Normal(z_mean, z_std)
         x_mean, x_std = self.generator(z)

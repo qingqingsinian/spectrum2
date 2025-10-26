@@ -215,10 +215,10 @@ def create_data_loaders(normal_df, attack_df, labels, window_size):
         y_test.append(1.0 if np.sum(window_labels) > 0 else 0.0)
     
     # 数据加载器
-    BATCH_SIZE = 7791
+    BATCH_SIZE = 2048
     w_size = window_size * normal_df.shape[1]
     z_size = window_size * 100
-    
+    print(window_size,normal_df.shape[1],z_size)
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=False)
     val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False)
     test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False)
@@ -250,9 +250,11 @@ def main(dataset_name='SWAT'):
     # 加载和预处理数据
     normal, attack, labels = load_dataset(dataset_name, input_dir)
     normal, attack, scaler = normalize_data(normal, attack)
-    
+    import pickle
+    with open(f'{dataset_name.lower()}_scaler.pkl', 'wb') as f:
+        pickle.dump(scaler, f)
     # 创建数据加载器
-    window_size = 120
+    window_size = 128
     train_loader, val_loader, test_loader, y_test, w_size, z_size = create_data_loaders(
         normal, attack, labels, window_size)
     
@@ -270,7 +272,7 @@ def main(dataset_name='SWAT'):
     print("Starting training...")
     weight_decay = 1e-5  # L2正则化系数
     train_start_time = time.time()
-    history = training(20, model, train_loader, val_loader, learning_rate=0.0004, weight_decay=weight_decay)
+    history = training(10, model, train_loader, val_loader, learning_rate=0.0004, weight_decay=weight_decay)
     train_end_time = time.time()
     train_time = train_end_time - train_start_time
     print(f"Training completed in {train_time:.2f} seconds")
@@ -288,7 +290,7 @@ def main(dataset_name='SWAT'):
     model.encoder.load_state_dict(checkpoint['encoder'])
     model.decoder1.load_state_dict(checkpoint['decoder1'])
     model.decoder2.load_state_dict(checkpoint['decoder2'])
-    
+    print(model.decoder1)
     # 测试模型并统计时间
     print("Starting testing...")
     test_start_time = time.time()
@@ -300,10 +302,16 @@ def main(dataset_name='SWAT'):
     # 处理测试结果
     y_pred = np.concatenate([torch.stack(results[:-1]).flatten().detach().cpu().numpy(),
                              results[-1].flatten().detach().cpu().numpy()])
-    
+    scores_df = pd.DataFrame({
+        'anomaly_score': y_pred,
+        'true_label': y_test
+    })
+    scores_df.to_csv(f'{dataset_name.lower()}_test_scores.csv', index=False)
+    print(f"Anomaly scores saved to {dataset_name.lower()}_test_scores.csv")
     #print(y_pred.shape,y_test.shape)
     
     # 绘制ROC曲线并获取最优阈值
+    print(len(y_test))
     print("Evaluating model performance...")
     threshold = ROC(y_test, y_pred)
     print(f"Optimal threshold: {threshold}")
@@ -322,13 +330,13 @@ def main(dataset_name='SWAT'):
         'recall': recall,
         'f1': f1,
         'threshold': threshold[0] if isinstance(threshold, np.ndarray) else threshold,
-        'train_time': train_time,
+        'train_time': 0,
         'test_time': test_time
     }
 # 修改主程序入口
 if __name__ == "__main__":
     # 支持评测多个数据集
-    datasets = [  'kpi','SMAP','PSM', 'SWAT','MSL','SMD']
+    datasets = [ 'SMAP',  'PSM','SMD','SWAT']
     results = {}
     
     # 准备CSV文件

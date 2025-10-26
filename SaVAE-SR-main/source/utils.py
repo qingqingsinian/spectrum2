@@ -185,9 +185,9 @@ class Loop(object):
             step_str = "{}".format(self._step_cnt)
         else:
             step_str = "{}/{}".format(self._step_cnt, self._max_steps)
-        process_str = "[epoch:{} step:{} ETA:{:.3f}s]".format(epoch_str, step_str,
-                                                              self._eta(estimate_epoch_time, estimate_step_time))
-        self._print_fn("{} {}".format(process_str, metric_str))
+        #process_str = "[epoch:{} step:{} ETA:{:.3f}s]".format(epoch_str, step_str,
+                                                              #self._eta(estimate_epoch_time, estimate_step_time))
+        #self._print_fn("{} {}".format(process_str, metric_str))
 
     def __make_variables(self, data):
         if isinstance(data, Iterable):

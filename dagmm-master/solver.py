@@ -56,13 +56,17 @@ class Solver(object):
         print("The number of parameters: {}".format(num_params))
 
     def load_pretrained_model(self):
+        # 获取数据集名称，如果不存在则使用默认名称
+        dataset_name = getattr(self, 'dataset', 'unknown_dataset')
+        # 构建包含数据集名称的模型路径
+        dataset_model_path = os.path.join(self.model_save_path, dataset_name)
+        
         self.dagmm.load_state_dict(torch.load(os.path.join(
-            self.model_save_path, '{}_dagmm.pth'.format(self.pretrained_model))))
+            dataset_model_path, '{}_dagmm.pth'.format(self.pretrained_model))))
 
-        print("phi", self.dagmm.phi,"mu",self.dagmm.mu, "cov",self.dagmm.cov)
+   
 
         print('loaded trained models (step: {})..!'.format(self.pretrained_model))
-
     def build_tensorboard(self):
         from logger import Logger
         self.logger = Logger(self.log_path)
@@ -109,7 +113,7 @@ class Solver(object):
                 loss['sample_energy'] = sample_energy.item()
                 loss['recon_error'] = recon_error.item()
                 loss['cov_diag'] = cov_diag.item()
-
+              
                 # Print out log info
                 if (i+1) % self.log_step == 0:
                     elapsed = time.time() - start_time
@@ -159,9 +163,17 @@ class Solver(object):
 
                     print("phi", self.dagmm.phi,"mu",self.dagmm.mu, "cov",self.dagmm.cov)
                 # Save model checkpoints
-                if (i+1) % self.model_save_step == 0:
-                    torch.save(self.dagmm.state_dict(),
-                        os.path.join(self.model_save_path, '{}_{}_dagmm.pth'.format(e+1, i+1)))
+            if (e+1) % self.model_save_step == 0:
+            # 获取数据集名称，如果不存在则使用默认名称
+                dataset_name = getattr(self, 'dataset', 'unknown_dataset')
+                # 创建包含数据集名称的模型保存路径
+                dataset_model_path = os.path.join(self.model_save_path, dataset_name)
+                # 确保目录存在
+                print("Saving model checkpoints to {}".format(dataset_model_path))
+                os.makedirs(dataset_model_path, exist_ok=True)
+                # 保存模型
+                torch.save(self.dagmm.state_dict(),
+                    os.path.join(dataset_model_path, '{}_{}_dagmm.pth'.format(e+1, i+1)))
 
         # 记录训练结束时间
         self.train_end_time = datetime.datetime.now()
@@ -235,7 +247,7 @@ class Solver(object):
         train_energy = np.concatenate(train_energy,axis=0)
         train_z = np.concatenate(train_z,axis=0)
         train_labels = np.concatenate(train_labels,axis=0)
-
+        print("enter here")
 
         self.data_loader.dataset.mode="test"
         test_energy = []
@@ -256,17 +268,24 @@ class Solver(object):
 
         combined_energy = np.concatenate([train_energy, test_energy], axis=0)
         combined_labels = np.concatenate([train_labels, test_labels], axis=0)
-
-        thresh = np.percentile(combined_energy, 100 - 20)
-        print("Threshold :", thresh)
+        from sklearn.metrics import precision_recall_fscore_support, accuracy_score, roc_curve
+        
+        # 计算约登指数 (Youden's J statistic = sensitivity + specificity - 1)
+        # sensitivity = tpr, specificity = 1 - fpr
+        fpr, tpr, thresholds = roc_curve(test_labels, test_energy)
+        youden_j = tpr - fpr  # 等价于 (tpr + (1-fpr) - 1)
+        
+        # 找到约登指数最大的索引
+        optimal_idx = np.argmax(youden_j)
+        thresh = thresholds[optimal_idx]
+        print("Best Threshold (based on ROC):", thresh)
+        print("Threshold Youden's J statistic:", youden_j[optimal_idx])
 
         pred = (test_energy > thresh).astype(int)
         gt = test_labels.astype(int)
 
-        from sklearn.metrics import precision_recall_fscore_support as prf, accuracy_score
-
         accuracy = accuracy_score(gt,pred)
-        precision, recall, f_score, support = prf(gt, pred, average='binary')
+        precision, recall, f_score, support = precision_recall_fscore_support(gt, pred, average='binary')
 
         # 记录测试结束时间
         test_end_time = datetime.datetime.now()

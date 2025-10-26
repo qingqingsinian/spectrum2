@@ -28,7 +28,7 @@ from utils import *
 import numpy as np
 import os
 import time
-
+#824.1233017444611/20=
 
 def auto(epoch):
     path_auto = os.getcwd() + '/auto.json'
@@ -52,7 +52,7 @@ if __name__ == '__main__':
     parser.add_argument('--seed', type=int, default=54321, help='random seed')
     parser.add_argument('--load', type=bool, default=False, help='load the existed model')
     parser.add_argument('--save', type=str, default='snapshot', help='path to save the model')
-    parser.add_argument('--epoch', type=int, default=10)
+    parser.add_argument('--epoch', type=int, default=20)
     parser.add_argument('--batch_size', type=int, default=256, help='path to save the model')
     parser.add_argument('--num_workers', type=int, default=8, help='number of workers of pytorch')
     parser.add_argument('--model', type=str, default='sr_cnn', help='model')
@@ -71,7 +71,7 @@ if __name__ == '__main__':
     model = args.model
     root_path = os.getcwd()
     train_data_path = root_path + '/' + data + '_' + str(window) + '_train.json'
-    model_path = root_path + '/' + args.save + '/'
+    model_path = root_path + '/' + args.save + '/'+'total'
     if args.load:
         load_path = root_path + '/' + args.load
     else:

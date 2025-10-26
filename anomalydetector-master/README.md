@@ -1,4 +1,6 @@
-
+实时检测
+python realtime_detector.py
+数据集放在在test_new下
 # Contributing
 
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a
@@ -22,17 +24,14 @@ The SR-CNN project is consisted of three major parts.<br>
 1.generate_data.py is used for preprocess the data, where the original continuous time series are splited according to window size and  artificial outliers are injected in proportion. <br> 
 `
 python generate_data.py --data <dataset>
-ex: python generate_data.py --data ./train  (Data needs to be placed under the train/kpi_train folder.)
 `<br> 
 where dataset is the file name of data folder.If you want to change the default config, you can use the command line args:<br>
 `
-python generate_data.py --data <dataset> --window 256 --step 128
+python generate_data.py -data <dataset> --window 256 --step 128
 `<br> 
 2.train.py is the network trianing module of SR-CNN. SR transformer is applied on each time-series before training.<br> 
 `
-python trian.py --data <dataset>
-ex: python generate_data.py --data ./train  (Data needs to be placed under the train/kpi_train folder.)
-
+python trian.py -data <dataset>
 `<br> 
 3.evalue.py is the evaluation module.As mentioned in our paper, <br>
 `
@@ -42,5 +41,4 @@ we set different delays to verify whether a whole section of anomalies can be de
 Run the code:<br>
 `
 python evalue.py -data <dataset>
-ex: python train.py --data ./test  (Data needs to be placed under the test folder.)
 `<br> 

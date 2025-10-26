@@ -4,14 +4,19 @@ from solver import Solver
 from data_loader import get_loader
 from torch.backends import cudnn
 from utils import *
-
+import numpy as np
+import random
 def str2bool(v):
     return v.lower() in ('true')
 # 添加input_dim参数到配置中
 def main(config):
     # For fast training
     cudnn.benchmark = True
-
+    torch.manual_seed(42)
+    np.random.seed(42)
+    random.seed(42)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
     # Create directories if not exist
     mkdir(config.log_path)
     mkdir(config.model_save_path)
@@ -59,7 +64,7 @@ if __name__ == '__main__':
     parser.add_argument('--gmm_k', type=int, default=3)
     parser.add_argument('--lambda_energy', type=float, default=0.1)
     parser.add_argument('--lambda_cov_diag', type=float, default=0.005)
-    parser.add_argument('--pretrained_model', type=str, default=None)
+    parser.add_argument('--pretrained_model', type=str, default='200_4')
 
     # Misc
     parser.add_argument('--mode', type=str, default='train', choices=['train', 'test'])
@@ -77,8 +82,8 @@ if __name__ == '__main__':
 
     # Step size
     parser.add_argument('--log_step', type=int, default=10)
-    parser.add_argument('--sample_step', type=int, default=194)
-    parser.add_argument('--model_save_step', type=int, default=194)
+    parser.add_argument('--sample_step', type=int, default=50)
+    parser.add_argument('--model_save_step', type=int, default=50)
 
     config = parser.parse_args()
  

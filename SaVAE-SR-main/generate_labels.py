@@ -5,8 +5,8 @@ from SR.spectral_residual import Silency
 
 
 if __name__=="__main__":
-    file_path = './data/b3b2e6d1a791d63a.csv'
-    save_path = './data/b3b2e6d1a791d63a_sr.csv'
+    file_path = './data/kpi_test.csv'
+    save_path = './data/kpi_test_sr.csv'
 
     df = pd.read_csv(file_path)
     timestamp = df["timestamp"].values 

@@ -2,6 +2,11 @@ support for kpi MSL SMAP SMD PSM swat datasets
 数据集放在input文件夹下
 运行方式 python main.py
 依次运行所有数据集
+python main.py
+python realtime_detector.py --data SMAP;
+python realtime_detector.py --data PSM;
+python realtime_detector.py --data SWAT;
+python realtime_detector.py --data SMD;
 # USAD - UnSupervised Anomaly Detection on multivariate time series
 
 Scripts and utility programs for implementing the USAD architecture.

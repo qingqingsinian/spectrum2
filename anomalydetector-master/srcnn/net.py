@@ -77,6 +77,7 @@ class Anomaly(nn.Module):
 
     def forward(self, x):
         x = x.view(x.size(0), self.window, 1)
+
         x = self.layer1(x)
         x = self.relu(x)
         x = self.layer2(x)

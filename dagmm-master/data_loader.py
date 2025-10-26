@@ -23,12 +23,12 @@ class KDD99Loader(object):
         features = data["kdd"][:,:-1]
         N, D = features.shape
         print(features)
-        normal_data = features[labels==1]
+        normal_data = features[labels==1]#异常数据
         normal_labels = labels[labels==1]
 
         N_normal = normal_data.shape[0]
 
-        attack_data = features[labels==0]
+        attack_data = features[labels==0]#正常数据
         attack_labels = labels[labels==0]
 
         N_attack = attack_data.shape[0]

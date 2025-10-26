@@ -232,7 +232,12 @@ class _IndexSampler(object):
             data = self.idx[self.pos:]
         self.pos += self.batch_size
         return data
-
+'''A[初始化KpiFrameDataLoader] --> B[创建_IndexSampler]
+    B --> C[__iter__方法被调用]
+    C --> D[获取下一个批次索引]
+    D --> E[从数据集中获取对应数据]
+    E --> F[转换为PyTorch张量]
+    F --> G[返回批次数据]'''
 
 class KpiFrameDataLoader(DataLoader):
     def __init__(self, dataset, batch_size, shuffle=False, drop_last=False):

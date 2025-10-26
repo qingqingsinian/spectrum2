@@ -15,8 +15,8 @@ def arg_parse():
     parser = argparse.ArgumentParser(description='KPI Anomaly Detection')
 
     parser.add_argument("--data", dest='data_path', type=str,
-                        default='./data/series24_sr.csv', help='The dataset path')
-    parser.add_argument("--max-epoch", dest='epochs', type=int, default=100, help="The random seed")
+                        default='./data/kpi_test_sr.csv', help='The dataset path')
+    parser.add_argument("--max-epoch", dest='epochs', type=int, default=60, help="The random seed")
     parser.add_argument("--batch-size", dest='batch_size', type=int, default=256, help="The number of the batch size")
     parser.add_argument("--window-size", dest='window_size', type=int, default=128, help="The size the sliding window")
     parser.add_argument("--latent-size", dest='latent_size', type=int, default=3, help="The dimension of the latent variables")
@@ -49,14 +49,16 @@ if __name__=="__main__":
 
 
     df = pd.read_csv(args.data_path, header=0, index_col=None)
+  
     kpi = KPISeries(value=df.value, timestamp=df.timestamp, label=df.pred, truth=df.label)
 
     train_kpi, test_kpi = kpi.split((0.5, 0.5))
+   
     train_kpi, train_kpi_mean, train_kpi_std = train_kpi.normalize(return_statistic=True)
     test_kpi = test_kpi.normalize(mean=train_kpi_mean, std=train_kpi_std)
-
-
     # Model
+
+    np.savez('normalization_stats.npz', mean=train_kpi_mean, std=train_kpi_std)
     model = IntroVAE(
         cuda=True,
         max_epoch=epochs,
@@ -67,11 +69,29 @@ if __name__=="__main__":
     )
 
     # Training 
-    model.fit(train_kpi.label_sampling(1.0), train_kpi)
+    #model.fit(train_kpi.label_sampling(1.0), train_kpi)
 
-    # Testing 
-    # compute the precision, recall and best F1-score of testing set
+    test_name = os.path.basename(args.data_path).split('.')[0]  # 获取测试文件名（不含扩展名）
+    #model.save_model_by_test_name(test_name, "final")
+    #Testing 
+    #compute the precision, recall and best F1-score of testing set
+    model_path='./saved_models/kpi_test_sr_final_model111.pth'
+    model.load(model_path)
     y_prob_train = model.predict(test_kpi.label_sampling(0.))
+
+    # 保存异常分数到CSV文件
+    # 创建包含时间戳、真实标签和异常分数的数据框
+    anomaly_scores_df = pd.DataFrame({
+        'timestamp': test_kpi.timestamp,
+        'value': test_kpi.value,
+        'true_label': test_kpi.truth,
+        'predicted_score': y_prob_train
+    })
+    
+    # 保存到CSV文件
+    scores_filename = f'anomaly_scores_{test_name}.csv'
+    anomaly_scores_df.to_csv(scores_filename, index=False)
+    print(f"Anomaly scores saved to: {scores_filename}")
     y_prob_train = range_lift_with_delay(y_prob_train, test_kpi.truth, delay=7)
     precisions, recalls, thresholds = metrics.precision_recall_curve(test_kpi.truth, y_prob_train)
     f1_scores = (2 * precisions * recalls) / (precisions + recalls)
@@ -79,8 +99,9 @@ if __name__=="__main__":
     precision = precisions[np.isfinite(precisions)][ind]
     recall = recalls[np.isfinite(recalls)][ind]
     best_f1 = np.max(f1_scores[np.isfinite(f1_scores)])
-
+    print("threshold:",thresholds[ind])
     print("The best F1 score:{}".format(best_f1))
+    
 
 
     # save the results to .csv file

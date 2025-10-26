@@ -48,7 +48,7 @@ def ROC(y_test,y_pred):
 
     return tr[idx]
     
-def confusion_matrix(target, predicted, perc=False):
+def confusion_matrix1(target, predicted, perc=False):
 
     data = {'y_Actual':    target,
             'y_Predicted': predicted
