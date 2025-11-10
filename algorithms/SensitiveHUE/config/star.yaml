@@ -1,0 +1,78 @@
+stride: 1
+head_num: 4
+max_epoch: 30
+lr: 0.001
+SMD:
+  raw_data_dir: ./data/SMD
+  data_dir: ./data/SMD/processed
+  step_num_in: 100
+  f_in: 38
+  alpha: 1
+  dim_model: 128
+  dim_hidden_fc: 256
+  encode_layer_num: 3
+
+  val_ratio: 0.2
+  batch_size: 128
+  model_save_dir: ./checkpoints/SMD
+  select_pos: mid
+
+SMAP:
+  raw_data_dir: ./data/SMAP
+  data_dir: ./data/SMAP/processed
+  step_num_in: 100
+  f_in: 25
+  alpha: 1
+  dim_model: 128
+  dim_hidden_fc: 256
+  encode_layer_num: 3
+  
+  val_ratio: 0.2
+  batch_size: 128
+  model_save_dir: ./checkpoints/SMAP
+  select_pos: mid
+
+MSL:
+  raw_data_dir: ./data/MSL
+  data_dir: ./data/MSL/processed
+  step_num_in: 100
+  f_in: 55
+  alpha: 1
+  dim_model: 128
+  dim_hidden_fc: 256
+  encode_layer_num: 3
+  
+  val_ratio: 0.2
+  batch_size: 128
+  model_save_dir: ./checkpoints/MSL
+  select_pos: mid
+
+PSM:
+  raw_data_dir: ./data/PSM
+  data_dir: ./data/PSM/processed
+  step_num_in: 100
+  f_in: 25
+  alpha: 1
+  dim_model: 128
+  dim_hidden_fc: 256
+  encode_layer_num: 3
+  
+  val_ratio: 0.2
+  batch_size: 128
+  model_save_dir: ./checkpoints/PSM
+  select_pos: mid
+
+SWaT:
+  raw_data_dir: ./data/SWAT/
+  data_dir: ./data/SWaT/processed
+  step_num_in: 100
+  f_in: 51
+  alpha: 1
+  dim_model: 128
+  dim_hidden_fc: 256
+  encode_layer_num: 3
+
+  val_ratio: 0.2
+  batch_size: 128
+  model_save_dir: ./checkpoints/SWaT
+  select_pos: mid
