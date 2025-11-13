@@ -1,18 +1,10 @@
 env/
 result/
 results/
-<<<<<<< HEAD
 datasets/
 __pycache__/
 .idea/
 .vscode/
 train/
-=======
-dataset/
-__pycache__/
-.idea/
-plot/
-.vscode/
-checkpoints/
-ReadingList.md
->>>>>>> 1ad20e7ea87dba8e18c98914fd9dc382a96b1a04
+ignored/
+figures/

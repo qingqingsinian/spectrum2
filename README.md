@@ -82,10 +82,6 @@ Our preprocessing pipeline includes:
 
 2. **Missing Value Analysis & Imputation**
    - Gap detection and characterization
-   - Multiple imputation strategies:
-     - Linear interpolation
-     - Forward/backward filling
-     - Seasonal pattern-based filling
    - Missing value statistics and visualization
 
 3. **Data Splitting & Normalization**
